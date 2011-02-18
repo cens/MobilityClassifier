@@ -10,6 +10,14 @@ public class MobilityClassifier
 	private static final String RUN = "run";
 	private static final String BIKE = "bike";
 	private static final String DRIVE = "drive";
+	private static final String VERSION = "1.0";
+	
+	
+	
+	public static String getVersion()
+	{
+		return VERSION;
+	}
 
 	/**
 	 * Take the raw sensor values and returns a classification object with the transport mode and, when applicable, features
@@ -30,7 +38,7 @@ public class MobilityClassifier
 	}
 	
 	/**
-	 * Converts to gravity units and calculates the overall magnitude of the trixial vectors.
+	 * Converts to gravity units and calculates the overall magnitude of the triaxial vectors.
 	 * @param sample
 	 * @return Magnitude value
 	 */

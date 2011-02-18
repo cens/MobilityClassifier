@@ -1,7 +1,5 @@
 package edu.ucla.cens.mobilityclassifier;
 
-import java.util.ArrayList;
-
 public class Sample
 {
 	private Double x;
