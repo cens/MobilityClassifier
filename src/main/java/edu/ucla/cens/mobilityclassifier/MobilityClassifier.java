@@ -10,7 +10,8 @@ public class MobilityClassifier
 	private static final String RUN = "run";
 	private static final String BIKE = "bike";
 	private static final String DRIVE = "drive";
-	private static final String VERSION = "1.0";
+	//private static final String VERSION = "1.0";
+	private static final String VERSION = "2.1";
 	
 	
 	
@@ -80,7 +81,7 @@ public class MobilityClassifier
 		double sum = 0.0, s = 0.0;
 		double avg = 0.0, a = 0.0;
 		double var = 0.0, v = 0.0;
-		ArrayList<Double> N95Fft = new ArrayList<Double>(5);
+		//ArrayList<Double> N95Fft = new ArrayList<Double>(5);
 		ArrayList<Double> fft = new ArrayList<Double>(10);
 
 		for(int i  = 1; i <= 10; i++)
@@ -111,24 +112,28 @@ public class MobilityClassifier
 			sum += magnitudes.get(i);
 		}
 
-		avg = sum / dataSize;
-		sum = 0.0;
-		for (int i = 0; i < dataSize; i++)
+		//avg = sum / dataSize;
+		//sum = 0.0;
+		/*for (int i = 0; i < dataSize; i++)
 		{
 			sum += Math.pow((magnitudes.get(i) - avg), 2.0);
 		}
 		var = sum / dataSize;
 		for (int i = 1; i <= 5; i++) 
-			N95Fft.add(goertzel(magnitudes, (double)i, dataSize));
+			N95Fft.add(goertzel(magnitudes, (double)i, dataSize));*/
+		
 		// Call classifier
-		classification.setMode(activity(var, N95Fft.get(0), N95Fft.get(1), N95Fft.get(2), speed, a, v, fft.get(0), fft.get(1), fft.get(2), fft.get(3), 
+	//	classification.setMode(activity(var, N95Fft.get(0), N95Fft.get(1), N95Fft.get(2), speed, a, v, fft.get(0), fft.get(1), fft.get(2), fft.get(3), 
+				//fft.get(4), fft.get(5), fft.get(6), fft.get(7), fft.get(8), fft.get(9)));
+		
+		classification.setMode(activity(speed,a,v, fft.get(0), fft.get(1), fft.get(2), fft.get(3),
 				fft.get(4), fft.get(5), fft.get(6), fft.get(7), fft.get(8), fft.get(9)));
 		// Add features to Classification object
 		classification.setAverage(a);
 		classification.setVariance(v);
 		classification.setFft(fft);
-		classification.setN95Fft(N95Fft);
-		classification.setN95Variance(var);
+	//	classification.setN95Fft(N95Fft);
+	//classification.setN95Variance(var);
 		classification.setHasFeatures(true);
 		return classification;
 	}
@@ -200,7 +205,7 @@ public class MobilityClassifier
 	}
 
 	/**
-	 * This is the main classification method.
+	 * This is the main classification method. Earlier code
 	 * @param acc_var
 	 * @param accgz1
 	 * @param accgz2
@@ -220,7 +225,7 @@ public class MobilityClassifier
 	 * @param a0
 	 * @return Classification object with the mode
 	 */
-	private String activity(double acc_var, double accgz1, double accgz2, double accgz3, double gps_speed, double avg, double var, double a1, double a2, double a3, double a4, double a5,
+	/*private String activity(double acc_var, double accgz1, double accgz2, double accgz3, double gps_speed, double avg, double var, double a1, double a2, double a3, double a4, double a5,
 			double a6, double a7, double a8, double a9, double a0)
 	{
 		String output = STILL;
@@ -264,7 +269,74 @@ public class MobilityClassifier
 				output = RUN;
 		else
 			output = RUN;
+	return output;
+	}*/
+	
+	/**
+	 * This is the main classification method. Updated code after retraining
+	 * @param acc_var
+	 * @param accgz1
+	 * @param accgz2
+	 * @param accgz3
+	 * @param gps_speed
+	 * @param avg
+	 * @param var
+	 * @param a1
+	 * @param a2
+	 * @param a3
+	 * @param a4
+	 * @param a5
+	 * @param a6
+	 * @param a7
+	 * @param a8
+	 * @param a9
+	 * @param a0
+	 * @return Classification object with the mode
+	 */	
+	private String activity(double gps_speed, double avg, double var, double a1, double a2, double a3, double a4, double a5,
+			double a6, double a7, double a8, double a9, double a0)
+	{
+		String output = STILL;
+		if(var <= 0.016831){
+			if(gps_speed <= 0.791462){
+				if(a3 <= 0.032949){
+					if(avg <= 0.963016)
+						output = STILL;
+					else  
+						if(a5 <= 0.001241){
+							if(avg <= 0.97949)
+									output = DRIVE; 
+							else
+								if(avg <= 1.033235)
+										output = STILL;
+								else
+									if(avg <= 1.042821){
+										if(avg <= 1.040987){
+											if(avg <= 1.037199){
+												if(avg <= 1.03592)
+													output = STILL;
+												else 
+													output = DRIVE; 
+											} else 
+												output = STILL;
+										} else  
+											output = DRIVE;
+									} else 
+										output = STILL;
+								} else 
+									output = STILL;
+					} else  
+						output = WALK;		
+				} else 
+					output = DRIVE;
+		}else 
+			if(a3 <= 16.840921)
+				output = WALK;
+			else  
+				output = RUN;	
+		
 		return output;
+		
 	}
 
 	/**
