@@ -297,44 +297,42 @@ public class MobilityClassifier
 			double a6, double a7, double a8, double a9, double a0)
 	{
 		String output = STILL;
-		if(var <= 0.016831){
-			if(gps_speed <= 0.791462){
-				if(a3 <= 0.032949){
-					if(avg <= 0.963016)
-						output = STILL;
-					else  
-						if(a5 <= 0.001241){
-							if(avg <= 0.97949)
-									output = DRIVE; 
-							else
-								if(avg <= 1.033235)
+		
+		if(var <= 0.016791)
+			if(a6 <= 0.002427)
+				if(a7 <= 0.001608)
+					if( gps_speed <= 0.791462 || gps_speed != Double.NaN)
+						if(avg <= 0.963016)
+							output = STILL;
+						else  if(avg <= 0.98282)
+						 	output = DRIVE;
+						      else if(avg <= 1.042821)
+								if(avg <= 1.040987)
+									if(avg <= 1.037199)
+										if(avg <= 1.03592)
+											output = STILL;
+										else 
+											output = DRIVE;
+									else
 										output = STILL;
 								else
-									if(avg <= 1.042821){
-										if(avg <= 1.040987){
-											if(avg <= 1.037199){
-												if(avg <= 1.03592)
-													output = STILL;
-												else 
-													output = DRIVE; 
-											} else 
-												output = STILL;
-										} else  
-											output = DRIVE;
-									} else 
-										output = STILL;
-								} else 
-									output = STILL;
-					} else  
-						output = WALK;		
-				} else 
+									output = DRIVE;
+							   else
+							   	output = STILL;
+					else
+						output = DRIVE;
+				else
 					output = DRIVE;
-		}else 
+			else if(gps_speed <= 0.791462 && gps_speed != Double.NaN)
+				output	= STILL;
+			     else
+				output = DRIVE;
+		else
 			if(a3 <= 16.840921)
 				output = WALK;
-			else  
+			else
 				output = RUN;	
-		
+						
 		return output;
 		
 	}
