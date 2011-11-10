@@ -3,6 +3,7 @@ package edu.ucla.cens.mobilityclassifier;
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class MobilityClassifier
 {
 	private static final String STILL = "still";
@@ -294,44 +295,87 @@ public class MobilityClassifier
 			double a6, double a7, double a8, double a9, double a0)
 	{
 		String output = STILL;
-		
+
 		if(var <= 0.016791)
+		{
 			if(a6 <= 0.002427)
+			{
 				if(a7 <= 0.001608)
-					if( gps_speed <= 0.791462 || gps_speed != Double.NaN)
-						if(avg <= 0.963016)
-							output = STILL;
-						else  if(avg <= 0.98282)
-						 	output = DRIVE;
-						      else if(avg <= 1.042821)
-								if(avg <= 1.040987)
-									if(avg <= 1.037199)
-										if(avg <= 1.03592)
-											output = STILL;
-										else 
-											output = DRIVE;
-									else
-										output = STILL;
-								else
-									output = DRIVE;
-							   else
-							   	output = STILL;
-					else
-						output = DRIVE;
-				else
-					output = DRIVE;
-			else if(gps_speed <= 0.791462 && gps_speed != Double.NaN)
-				output	= STILL;
-			     else
-				output = DRIVE;
-		else
-			if(a3 <= 16.840921)
-				output = WALK;
-			else
-				output = RUN;	
+				{
+					if( gps_speed <= 0.791462 || gps_speed == Double.NaN)//|| gps_speed != Double.NaN)
+					{
 						
+//						if(avg <= 0.963016)
+//						{
+//							output = STILL;
+//						}
+//						else  if(avg <= 0.98282)
+//						{
+//							output = DRIVE;Log.d(TAG, "Drive 0 because gps speed is " + gps_speed + " and avg is " + avg);
+//						}
+//						else if(avg <= 1.042821)
+//						{
+//							if(avg <= 1.040987)
+//							{
+//								if(avg <= 1.037199)
+//								{
+//									if(avg <= 1.03592)
+//									{
+//										output = STILL;
+//									}
+//									else 
+//									{
+//										output = DRIVE;Log.d(TAG, "Drive 1");
+//									}
+//								}
+//								else
+//								{
+//									output = STILL;
+//								}
+//							}
+//							else
+//							{
+//								output = DRIVE;Log.d(TAG, "Drive 2");
+//							}
+//						}
+//						else
+						{
+						 	output = STILL;
+						}
+					}
+					else
+					{
+						output = DRIVE;
+					}
+				}
+				else
+				{
+					output = DRIVE;
+				}
+			}
+			else if(gps_speed <= 0.791462 || gps_speed == Double.NaN)//&& gps_speed != Double.NaN)
+			{
+				output = STILL;
+			}
+			else
+			{
+				output = DRIVE;
+			}
+		}
+		else
+		{
+			if(a3 <= 16.840921)
+			{
+				output = WALK;
+			}
+			else
+			{
+				output = RUN;	
+			}
+		}
+
 		return output;
-		
+
 	}
 
 	/**
