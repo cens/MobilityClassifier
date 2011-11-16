@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+
 public class MobilityClassifier
 {
 	private static final String STILL = "still";
@@ -291,7 +292,7 @@ public class MobilityClassifier
 	 * @param a0
 	 * @return Classification object with the mode
 	 */	
-	private String activity(double gps_speed, double avg, double var, double a1, double a2, double a3, double a4, double a5,
+	private String activity(Double gps_speed, double avg, double var, double a1, double a2, double a3, double a4, double a5,
 			double a6, double a7, double a8, double a9, double a0)
 	{
 		String output = STILL;
@@ -302,7 +303,7 @@ public class MobilityClassifier
 			{
 				if(a7 <= 0.001608)
 				{
-					if( gps_speed <= 0.791462 || gps_speed == Double.NaN)//|| gps_speed != Double.NaN)
+					if( gps_speed <= 0.791462 || gps_speed.isNaN())//|| gps_speed != Double.NaN)
 					{
 						
 //						if(avg <= 0.963016)
@@ -325,7 +326,7 @@ public class MobilityClassifier
 //									}
 //									else 
 //									{
-//										output = DRIVE;Log.d(TAG, "Drive 1");
+//										output = DRIVE;
 //									}
 //								}
 //								else
@@ -335,7 +336,7 @@ public class MobilityClassifier
 //							}
 //							else
 //							{
-//								output = DRIVE;Log.d(TAG, "Drive 2");
+//								output = DRIVE;
 //							}
 //						}
 //						else
@@ -353,7 +354,7 @@ public class MobilityClassifier
 					output = DRIVE;
 				}
 			}
-			else if(gps_speed <= 0.791462 || gps_speed == Double.NaN)//&& gps_speed != Double.NaN)
+			else if(gps_speed <= 0.791462 || gps_speed.isNaN())//&& gps_speed != Double.NaN)
 			{
 				output = STILL;
 			}
