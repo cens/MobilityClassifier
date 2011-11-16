@@ -12,7 +12,7 @@ public class MobilityClassifier
 	private static final String RUN = "run";
 	private static final String BIKE = "bike";
 	private static final String DRIVE = "drive";
-	private static final String VERSION = "1.1";
+	private static final String VERSION = "1.2.1";
 	
 	public static String getVersion()
 	{
