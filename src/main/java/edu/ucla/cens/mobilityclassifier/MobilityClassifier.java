@@ -12,7 +12,7 @@ public class MobilityClassifier
 	private static final String RUN = "run";
 	private static final String BIKE = "bike";
 	private static final String DRIVE = "drive";
-	private static final String VERSION = "1.2.3";
+	private static final String VERSION = "1.2.5";
 	
 	public static String getVersion()
 	{
@@ -301,8 +301,8 @@ public class MobilityClassifier
 		{
 			if(a6 <= 0.002427)
 			{
-				if(a7 <= 0.001608)
-				{
+				/*if(a7 <= 0.001608)
+				{*/
 					if( gps_speed <= 0.791462 || gps_speed.isNaN())//|| gps_speed != Double.NaN)
 					{
 						
@@ -348,11 +348,11 @@ public class MobilityClassifier
 					{
 						output = DRIVE;
 					}
-				}
+				/*}
 				else
 				{
 					output = DRIVE;
-				}
+				}*/
 			}
 			else if(gps_speed <= 0.791462 || gps_speed.isNaN())//&& gps_speed != Double.NaN)
 			{
