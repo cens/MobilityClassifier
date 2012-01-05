@@ -36,7 +36,7 @@ public class MobilityClassifier
 		{
 			magnitudes.add(getMagnitude(sample));
 		}
-		if (!lastMode.equals("STILL") && !lastMode.equals("DRIVE"))
+		if (lastMode != null || (!lastMode.equals("STILL") && !lastMode.equals("DRIVE")))
 			lastMode = UNKNOWN; // Not allowing any aberrant values for this
 		return getTransportMode(magnitudes, speed, wifi, lastWifi, lastMode);
 	}
