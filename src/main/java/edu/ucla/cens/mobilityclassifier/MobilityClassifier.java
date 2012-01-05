@@ -66,7 +66,7 @@ public class MobilityClassifier
 				return lastMode;
 			}
 
-			if (lastTime < time - 1000 * 60 * 5) // if no recent wifi for comparison
+			if (lastTime < time - 1000 * 60 * 8) // if no recent wifi for comparison
 			{
 				//writeWifi(settings, time, UNKNOWN, APs);
 				return UNKNOWN;
