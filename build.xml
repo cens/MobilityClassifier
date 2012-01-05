@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+
+<project name="mobility-classifier" basedir="." default="dist-all">
+  <property file="build.properties"/>
+  <property name="component.repository" location="${user.home}/.component-repository"/>
+  <property name="version"  value="snapshot"/>
+  <property name="src" location="src/main/java"/>
+  <property name="build" location="build"/>
+  <property name="dist"  location="dist"/>
+
+  <target name="help-properties" description="Shows what properties you may want to override on the command line.">
+    <echo message="-Dcomponent.repository=&lt;path&gt;  Where to search for dependencies/versioned components during build [${component.repository}]."/>
+    <echo message="-Dversion=&lt;version&gt;  Version string to use for output [${version}]."/>
+  </target>
+
+  <target name="clean" description="Removes output directories (e.g. build and dist).">
+    <delete dir="${build}"/>
+    <delete dir="${dist}"/>
+  </target>
+
+  <target name="javac" description="Compiles Java files.">
+    <mkdir dir="${build}/classes"/>
+    <javac destdir="${build}/classes" source="1.6" target="1.6"
+           debug="true" deprecation="true" optimize="false" failonerror="true" encoding="UTF-8">
+      <compilerarg value="-Xlint:unchecked"/>
+      <src path="${src}"/>
+    </javac>
+    <copy todir="${build}/classes">
+      <fileset dir="${src}">
+        <exclude name="**/*.java"/>
+      </fileset>
+    </copy>
+  </target>
+
+  <target name="javadoc" description="Compiles Javadocs.">
+    <mkdir dir="${build}/docs"/>
+    <javadoc destdir="${build}/docs" private="true" link="http://java.sun.com/javase/6/docs/api/"
+             encoding="UTF-8" additionalparam="-quiet">
+      <fileset dir="${src}">
+        <include name="**/*.java"/>
+      </fileset>
+    </javadoc>
+  </target>
+	
+  <target name="dist" depends="javac" description="Compiles Java files and creates an executable jar file with the dependencies embedded.">
+    <mkdir dir="${dist}"/>
+	<jar destfile="${dist}/${ant.project.name}-${version}.jar">
+	  <fileset dir="${build}/classes"/>
+	</jar>
+  </target>
+	
+  <target name="dist-docs" depends="javadoc" description="Compiles Javadocs and creates gzipped tarball.">
+    <mkdir dir="${dist}"/>
+    <tar basedir="${build}/docs" destfile="${dist}/${ant.project.name}-docs-${version}.tar.gz" longfile="gnu" compression="gzip"/>
+    <zip basedir="${build}/docs" destfile="${dist}/${ant.project.name}-docs-${version}.zip" encoding="UTF-8" compress="true"/>
+  </target>
+
+  <target name="dist-all" depends="dist,dist-docs" description="Creates full distribution (WAR and docs)."/>
+
+  <target name="release" depends="dist" description="Releases the distribution by copying it to the component repository..">
+    <copy file="${dist}/${ant.project.name}-${version}.war" todir="${component.repository}/."/>
+  </target>
+
+ </project>
