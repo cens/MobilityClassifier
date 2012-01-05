@@ -3,17 +3,20 @@ package edu.ucla.cens.mobilityclassifier;
 import java.util.ArrayList;
 import java.util.List;
 
-
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class MobilityClassifier
 {
 	private static final String STILL = "still";
 	private static final String WALK = "walk";
 	private static final String RUN = "run";
-	private static final String BIKE = "bike";
+	private static final String BIKE = "bike"; // not supported now
 	private static final String DRIVE = "drive";
-	private static final String VERSION = "1.2.5";
-	
+	private static final String UNKNOWN = "unknown";
+	private static final String VERSION = "1.2.8";
+	public static boolean wifiChecking = true;
 	public static String getVersion()
 	{
 		return VERSION;
@@ -25,16 +28,126 @@ public class MobilityClassifier
 	 * @param speed
 	 * @return
 	 */
-	public Classification classify(List<Sample> accelValues, Double speed)
+	public Classification classify(List<Sample> accelValues, Double speed, String wifi, String lastWifi, String lastMode)
 	{
-		// Convert from triaxial to single magnitude vector in gravity units
+		// Convert from triaxial to single magnitude ArrayList in gravity units
 		ArrayList<Double> magnitudes = new ArrayList<Double>();
 		for (Sample sample : accelValues)
 		{
 			magnitudes.add(getMagnitude(sample));
 		}
+		if (!lastMode.equals("STILL") && !lastMode.equals("DRIVE"))
+			lastMode = UNKNOWN; // Not allowing any aberrant values for this
+		return getTransportMode(magnitudes, speed, wifi, lastWifi, lastMode);
+	}
+	
+	/**
+	 * Compares current WiFi point to the previous one, and returns UNKNOWN, STILL, or DRIVE
+	 * @param sample
+	 * @return Magnitude value
+	 */
+	private String checkWifi(JSONObject wifiJson, JSONObject lastWifiJson, String lastMode) throws JSONException
+	{
+		// load previous
 		
-		return getTransportMode(magnitudes, speed);
+		long time = wifiJson.getLong("time");
+		if (lastWifiJson != null)
+		{
+			long lastTime = lastWifiJson.getLong("time");
+			ArrayList<String> APsFromLastTime = JSONToList(lastWifiJson);
+
+			ArrayList<String> APs = JSONToList(wifiJson);
+			
+			// compare to APsFromLastTime
+			double same = 0;
+			double total = 0;
+			if (lastTime == time) // no new wifi data
+			{
+				return lastMode;
+			}
+
+			if (lastTime < time - 1000 * 60 * 5) // if no recent wifi for comparison
+			{
+				//writeWifi(settings, time, UNKNOWN, APs);
+				return UNKNOWN;
+			}
+			// Now we can do the comparison
+			for (String AP : APs)
+			{
+				if (APsFromLastTime.contains(AP))
+					same++;
+				total++;
+			}
+			for (String AP : APsFromLastTime)
+			{
+				if (!APs.contains(AP)) // only count others that don't match. We don't count the same ones again. Change that if too many false DRIVE classifications
+					total++;
+			}
+
+			if (total > 0 && same / total < 1. / 3.)
+			{
+
+				//writeWifi(settings, time, DRIVE, APs);
+				return DRIVE;// + " " + same / total;
+			}
+			else if (total > 0)
+			{
+
+				//writeWifi(settings, time, STILL, APs);
+				return STILL;// + " " + same / total;
+			}
+			else
+			{
+
+				//writeWifi(settings, time, UNKNOWN, APs);
+				return UNKNOWN;
+			}
+		}
+		else
+		{
+
+			// no history
+			//ArrayList<String> APs = JSONToList(wifiJson);
+			//writeWifi(settings, time, UNKNOWN, APs);
+			return UNKNOWN;
+		}
+		
+
+	}
+	
+	private ArrayList<String> JSONToList(JSONObject jsonObject)
+			throws JSONException
+	{
+		ArrayList<String> list = new ArrayList<String>();
+		int strsum = 0, strcount = 0;
+		JSONObject ap;
+		JSONArray array = jsonObject.getJSONArray("scan");
+		for (int i = 0; i < array.length(); i++)
+		{
+			ap = array.getJSONObject(i);
+			strsum += ap.getInt("strength");
+			strcount++;
+			if (ap.getInt("strength") < -50)
+			{
+				list.add(ap.getString("ssid"));
+			}
+		}
+		if (list.size() == 0 && strcount > 0)
+		{
+			double avg = strsum / strcount;
+			for (int i = 0; i < array.length(); i++)
+			{
+				ap = array.getJSONObject(i);
+				strsum += ap.getInt("strength");
+				strcount++;
+				if (ap.getInt("strength") < avg)
+				{
+					list.add(ap.getString("ssid"));
+				}
+			}
+		}
+
+		return list;
 	}
 	
 	/**
@@ -64,10 +177,26 @@ public class MobilityClassifier
 	 * @param speed
 	 * @return Classification with mode, and, if they were calculated, features
 	 */
-	private Classification getTransportMode(ArrayList<Double> magnitudes, Double speed)
+	private Classification getTransportMode(ArrayList<Double> magnitudes, Double speed, String wifi, String lastWifi, String lastMode)
 	{
 		double dataSize = magnitudes.size();
 		Classification classification = new Classification();
+		String wifiActivity = UNKNOWN;
+		if (wifi != null)
+		{
+			try
+			{
+				if (lastWifi == null)
+					wifiActivity = checkWifi(new JSONObject(wifi), null, lastMode);
+				else
+					wifiActivity = checkWifi(new JSONObject(wifi), new JSONObject(lastWifi), lastMode);
+			}
+			catch (JSONException e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		
 		// If there are not enough samples for feature calculation, the phone must be still
 		if (dataSize <= 10)
@@ -125,8 +254,15 @@ public class MobilityClassifier
 	//	classification.setMode(activity(var, N95Fft.get(0), N95Fft.get(1), N95Fft.get(2), speed, a, v, fft.get(0), fft.get(1), fft.get(2), fft.get(3), 
 				//fft.get(4), fft.get(5), fft.get(6), fft.get(7), fft.get(8), fft.get(9)));
 		
-		classification.setMode(activity(speed,a,v, fft.get(0), fft.get(1), fft.get(2), fft.get(3),
-				fft.get(4), fft.get(5), fft.get(6), fft.get(7), fft.get(8), fft.get(9)));
+		String activity = activity(speed,a,v, fft.get(0), fft.get(1), fft.get(2), fft.get(3), fft.get(4), fft.get(5), fft.get(6), fft.get(7), fft.get(8), fft.get(9));
+		
+		if (wifiChecking && !wifiActivity.equals(UNKNOWN))
+		{
+			if (activity.equals(DRIVE) || activity.equals(STILL))
+				activity = wifiActivity; // The other classifier is rubbish for still/drive; just use WiFi result if there is one
+		}
+		
+		classification.setMode(activity);
 		// Add features to Classification object
 		classification.setAverage(a);
 		classification.setVariance(v);
@@ -404,5 +540,34 @@ public class MobilityClassifier
 		return power;
 	}
 	
-	
+//	public static void main(String [] args)
+//	{
+//		// List<Sample> accelValues, Double speed, String wifi, String lastWifi, String lastMode
+//		ArrayList<Sample> accelValues = new ArrayList<Sample>();
+//		Sample sample = new Sample();
+//		sample.setX(0.);
+//		sample.setY(0.);
+//		sample.setZ(1.);
+//		accelValues.add(sample);
+//		accelValues.add(sample);
+//		accelValues.add(sample);
+//		accelValues.add(sample);
+//		accelValues.add(sample);
+//		accelValues.add(sample);
+//		accelValues.add(sample);
+//		accelValues.add(sample);
+//		accelValues.add(sample);
+//		accelValues.add(sample);
+//		accelValues.add(sample);
+//		accelValues.add(sample);
+//		accelValues.add(sample);
+//		accelValues.add(sample);
+//		accelValues.add(sample);
+//		accelValues.add(sample);
+//		accelValues.add(sample);
+//		accelValues.add(sample);
+//		String last = "{\"timezone\":\"org.apache.harmony.luni.internal.util.ZoneInfo[\\\"PST\\\",mRawOffset=-28800000,mUseDst=true]\",\"time\":1325716855277,\"scan\":[{\"ssid\":\"00:27:0d:ed:35:61\",\"strength\":-91},{\"ssid\":\"00:1a:1e:81:96:41\",\"strength\":-88},{\"ssid\":\"00:23:69:0d:7a:d8\",\"strength\":-88},{\"ssid\":\"00:11:24:a9:82:a4\",\"strength\":-87},{\"ssid\":\"00:1a:1e:81:96:43\",\"strength\":-87},{\"ssid\":\"00:1a:1e:81:96:45\",\"strength\":-87},{\"ssid\":\"00:1a:1e:1f:3a:24\",\"strength\":-84},{\"ssid\":\"00:1a:1e:1f:3a:25\",\"strength\":-83},{\"ssid\":\"00:1a:1e:1f:3a:22\",\"strength\":-83},{\"ssid\":\"00:1a:1e:89:4b:82\",\"strength\":-82},{\"ssid\":\"00:1a:1e:1f:3a:23\",\"strength\":-82},{\"ssid\":\"00:1a:1e:89:4b:83\",\"strength\":-82},{\"ssid\":\"00:1a:1e:89:4b:81\",\"strength\":-81},{\"ssid\":\"00:17:5a:b7:ef:90\",\"strength\":-60},{\"ssid\":\"00:1a:1e:1f:3c:c4\",\"strength\":-56},{\"ssid\":\"00:1a:1e:1f:3c:c5\",\"strength\":-53},{\"ssid\":\"00:1a:1e:1f:3c:c2\",\"strength\":-53},{\"ssid\":\"00:1a:1e:1f:3c:c1\",\"strength\":-51}]}";
+//		String current = "{\"timezone\":\"org.apache.harmony.luni.internal.util.ZoneInfo[\\\"PST\\\",mRawOffset=-28800000,mUseDst=true]\",\"time\":1325716976116,\"scan\":[{\"ssid\":\"00:1a:1e:81:96:41\",\"strength\":-88},{\"ssid\":\"00:27:0d:ed:35:62\",\"strength\":-88},{\"ssid\":\"00:27:0d:ed:35:60\",\"strength\":-88},{\"ssid\":\"00:1a:1e:89:4b:83\",\"strength\":-82},{\"ssid\":\"00:1a:1e:89:4b:82\",\"strength\":-81},{\"ssid\":\"00:1a:1e:89:4b:85\",\"strength\":-81},{\"ssid\":\"00:1a:1e:1f:3a:24\",\"strength\":-80},{\"ssid\":\"00:1a:1e:1f:3a:22\",\"strength\":-80},{\"ssid\":\"00:1a:1e:89:4b:81\",\"strength\":-76},{\"ssid\":\"00:17:5a:b7:ef:90\",\"strength\":-61},{\"ssid\":\"00:1a:1e:1f:3c:c5\",\"strength\":-54},{\"ssid\":\"00:1a:1e:1f:3c:c4\",\"strength\":-53},{\"ssid\":\"00:1a:1e:1f:3c:c1\",\"strength\":-53},{\"ssid\":\"00:1a:1e:1f:3c:c2\",\"strength\":-53}]}";
+//		System.out.println(new MobilityClassifier().classify(accelValues, 1.0, current, last, UNKNOWN).getMode());
+//	}
 }
