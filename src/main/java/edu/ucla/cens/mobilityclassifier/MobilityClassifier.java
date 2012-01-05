@@ -197,7 +197,7 @@ public class MobilityClassifier
 				e.printStackTrace();
 			}
 		}
-		
+		classification.setWifiMode(wifiActivity);
 		// If there are not enough samples for feature calculation, the phone must be still
 		if (dataSize <= 10)
 		{

@@ -7,6 +7,9 @@ public class Classification
 {
 	private String mode;
 	private ArrayList<Double> fft;
+//	private ArrayList<String> currentScan;
+//	private ArrayList<String> lastScan;
+	private String wifiMode;
 	private Double average;
 	private Double variance;
 	private ArrayList<Double> N95Fft;
@@ -68,6 +71,30 @@ public class Classification
 	public void setHasFeatures(boolean hasFeatures)
 	{
 		this.hasFeatures = hasFeatures;
+	}
+//	public ArrayList<String> getLastScan()
+//	{
+//		return lastScan;
+//	}
+//	public void setLastScan(ArrayList<String> lastScan)
+//	{
+//		this.lastScan = lastScan;
+//	}
+//	public ArrayList<String> getCurrentScan()
+//	{
+//		return currentScan;
+//	}
+//	public void setCurrentScan(ArrayList<String> currentScan)
+//	{
+//		this.currentScan = currentScan;
+//	}
+	public String getWifiMode()
+	{
+		return wifiMode;
+	}
+	public void setWifiMode(String wifiMode)
+	{
+		this.wifiMode = wifiMode;
 	}
 		
 }
