@@ -1,14 +1,26 @@
+/*******************************************************************************
+ * Copyright 2012 The Regents of the University of California
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 package edu.ucla.cens.mobilityclassifier;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class Classification
-{
+public class Classification {
 	private String mode;
 	private ArrayList<Double> fft;
-//	private ArrayList<String> currentScan;
-//	private ArrayList<String> lastScan;
 	private String wifiMode;
 	private Double average;
 	private Double variance;
@@ -72,22 +84,6 @@ public class Classification
 	{
 		this.hasFeatures = hasFeatures;
 	}
-//	public ArrayList<String> getLastScan()
-//	{
-//		return lastScan;
-//	}
-//	public void setLastScan(ArrayList<String> lastScan)
-//	{
-//		this.lastScan = lastScan;
-//	}
-//	public ArrayList<String> getCurrentScan()
-//	{
-//		return currentScan;
-//	}
-//	public void setCurrentScan(ArrayList<String> currentScan)
-//	{
-//		this.currentScan = currentScan;
-//	}
 	public String getWifiMode()
 	{
 		return wifiMode;
