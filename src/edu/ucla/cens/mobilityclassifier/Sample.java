@@ -15,34 +15,58 @@
  ******************************************************************************/
 package edu.ucla.cens.mobilityclassifier;
 
+/**
+ * A sample reading from the accelerometer of our device.
+ * 
+ * @author John Jenkins
+ */
 public class Sample
 {
-	private Double x;
-	private Double y;
-	private Double z;
+	private double x;
+	private double y;
+	private double z;
 	
-	public Double getX()
-	{
+	/**
+	 * Creates a new Sample from the three accelerometer points.
+	 * 
+	 * @param x The X component of the accelerometer reading.
+	 * 
+	 * @param y The Y component of the accelerometer reading.
+	 * 
+	 * @param z The Z component of the accelerometer reading.
+	 */
+	public Sample(final double x, final double y, final double z) {
+		this.x = x;
+		this.y = y;
+		this.z = z;
+	}
+	
+	/**
+	 * Returns the X component of the accelerometer reading.
+	 * 
+	 * @return The X component of the accelerometer reading.
+	 */
+	public Double getX() {
 		return x;
 	}
-	public void setX(Double x)
-	{
-		this.x = x;
-	}
+
+	/**
+	 * Returns the Y component of the accelerometer reading.
+	 * 
+	 * @return The Y component of the accelerometer reading.
+	 */
 	public Double getY()
 	{
 		return y;
 	}
-	public void setY(Double y)
-	{
-		this.y = y;
-	}
+
+	/**
+	 * Returns the Z component of the accelerometer reading.
+	 * 
+	 * @return The Z component of the accelerometer reading.
+	 */
 	public Double getZ()
 	{
 		return z;
-	}
-	public void setZ(Double z)
-	{
-		this.z = z;
 	}
 }

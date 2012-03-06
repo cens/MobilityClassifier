@@ -24,22 +24,37 @@ public class AccessPoint {
 	private final String ssid;
 	private final Double strength;
 	
-	public AccessPoint(String ssid, Double strength) {
+	/**
+	 * A reading from an access point.
+	 * 
+	 * @param ssid The access point's unique identifier.
+	 * 
+	 * @param strength The strength of the signal from the access point at the
+	 * 				   time of the reading.
+	 */
+	public AccessPoint(String ssid, double strength) {
 		if(ssid == null || ssid.trim().equals("")) {
 			throw new IllegalArgumentException("An SSID is required");
 		}
-		if(strength == null) {
-			throw new IllegalArgumentException("A strength value is required");
-		}
-		
+
 		this.ssid = ssid;
 		this.strength = strength;
 	}
 
+	/**
+	 * Returns the unique identifier of the access point.
+	 * 
+	 * @return The unique identifier of the access point.
+	 */
 	public String getSsid() {
 		return ssid;
 	}
 
+	/**
+	 * Returns the strength of the signal from the access point.
+	 * 
+	 * @return The strength of the signal from the access point.
+	 */
 	public Double getStrength() {
 		return strength;
 	}

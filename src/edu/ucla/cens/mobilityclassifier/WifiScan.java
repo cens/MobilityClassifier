@@ -26,22 +26,43 @@ public class WifiScan {
 	private final Long time;
 	private final List<AccessPoint> accessPoints;
 	
-	public WifiScan(Long time, List<AccessPoint> accessPoints) {
+	/**
+	 * Creates a new WiFi scan.
+	 * 
+	 * @param time The time at which the scan occurred.
+	 * 
+	 * @param accessPoints The list of access points that were heard from in
+	 * 					   this scan.
+	 */
+	public WifiScan(
+			final Long time, 
+			final List<AccessPoint> accessPoints) {
+		
 		if(time == null) {
-			throw new IllegalArgumentException("time is required");
+			throw new IllegalArgumentException("Time is required");
 		}
-		if(accessPoints == null || accessPoints.size() == 0) {
-			throw new IllegalArgumentException("access points are required");
+		if(accessPoints == null) {
+			throw new IllegalArgumentException("Access points are required");
 		}
 		
 		this.time = time;
 		this.accessPoints = accessPoints;
 	}
 
+	/**
+	 * Returns the time at which the scan occurred.
+	 * 
+	 * @return The time at which the scan occurred.
+	 */
 	public Long getTime() {
 		return time;
 	}
 
+	/**
+	 * Returns the list of access points that were heard from in this scan.
+	 * 
+	 * @return The list of access points that were heard form in this scan.
+	 */
 	public List<AccessPoint> getAccessPoints() {
 		return accessPoints;
 	}

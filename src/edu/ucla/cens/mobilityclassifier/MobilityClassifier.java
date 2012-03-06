@@ -83,9 +83,9 @@ public class MobilityClassifier {
 		
 		classification.setWifiMode(wifiActivity);
 		
-		double sum = 0.0, s = 0.0;
-		double avg = 0.0, a = 0.0;
-		double var = 0.0, v = 0.0;
+		double sum = 0.0;
+		double average = 0.0;
+		double variance = 0.0;
 
 		ArrayList<Double> fft = new ArrayList<Double>(10);
 
@@ -93,27 +93,26 @@ public class MobilityClassifier {
 			fft.add(goertzel(magnitudes, (double) i, dataSize));
 		}
 
-		for (int i = 0; i < dataSize; i++)
-		{
-			s += magnitudes.get(i);
-		}
-		a = s / dataSize;
-		s = 0.0;
 		for (int i = 0; i < dataSize; i++) {
-			s += Math.pow((magnitudes.get(i) - a), 2.0);
+			sum += magnitudes.get(i);
+		}
+		average = sum / dataSize;
+		sum = 0.0;
+		for (int i = 0; i < dataSize; i++) {
+			sum += Math.pow((magnitudes.get(i) - average), 2.0);
 		}
 
-		v = s / dataSize;
+		variance = sum / dataSize;
 
 		for (int i = 0; i < dataSize; i++) {
 			magnitudes.set(i, magnitudes.get(i) * 310.); // convert to N95 units
 		}
 
 		for (int i = 0; i < dataSize; i++) {
-			sum += magnitudes.get(i);
+			magnitudes.get(i);
 		}
 
-		String activity = activity(speed,a,v, fft.get(0), fft.get(1), fft.get(2), fft.get(3), fft.get(4), fft.get(5), fft.get(6), fft.get(7), fft.get(8), fft.get(9));
+		String activity = activity(speed,average,variance, fft.get(0), fft.get(1), fft.get(2), fft.get(3), fft.get(4), fft.get(5), fft.get(6), fft.get(7), fft.get(8), fft.get(9));
 		
 		if (wifiChecking && ! wifiActivity.equals(UNKNOWN)) {
 			if (activity.equals(DRIVE) || activity.equals(STILL)) {
@@ -122,8 +121,8 @@ public class MobilityClassifier {
 		}
 		
 		classification.setMode(activity);
-		classification.setAverage(a);
-		classification.setVariance(v);
+		classification.setAverage(average);
+		classification.setVariance(variance);
 		classification.setFft(fft);
 		classification.setHasFeatures(true);
 		return classification;
