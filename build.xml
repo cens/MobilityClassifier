@@ -55,8 +55,4 @@
 
   <target name="dist-all" depends="dist,dist-docs" description="Creates full distribution (WAR and docs)."/>
 
-  <target name="release" depends="dist" description="Releases the distribution by copying it to the component repository..">
-    <copy file="${dist}/${ant.project.name}-${version}.war" todir="${component.repository}/."/>
-  </target>
-
  </project>
