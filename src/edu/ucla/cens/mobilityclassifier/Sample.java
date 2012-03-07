@@ -20,8 +20,7 @@ package edu.ucla.cens.mobilityclassifier;
  * 
  * @author John Jenkins
  */
-public class Sample
-{
+public class Sample {
 	private double x;
 	private double y;
 	private double z;
@@ -55,8 +54,7 @@ public class Sample
 	 * 
 	 * @return The Y component of the accelerometer reading.
 	 */
-	public Double getY()
-	{
+	public Double getY() {
 		return y;
 	}
 
@@ -65,8 +63,7 @@ public class Sample
 	 * 
 	 * @return The Z component of the accelerometer reading.
 	 */
-	public Double getZ()
-	{
+	public Double getZ() {
 		return z;
 	}
 }
