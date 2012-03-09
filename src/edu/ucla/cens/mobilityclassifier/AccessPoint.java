@@ -58,4 +58,41 @@ public class AccessPoint {
 	public Double getStrength() {
 		return strength;
 	}
+
+	@Override
+	public String toString() {
+		return "AccessPoint [ssid=" + ssid + ", strength=" + strength + "]";
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((ssid == null) ? 0 : ssid.hashCode());
+		result = prime * result
+				+ ((strength == null) ? 0 : strength.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		AccessPoint other = (AccessPoint) obj;
+		if (ssid == null) {
+			if (other.ssid != null)
+				return false;
+		} else if (!ssid.equals(other.ssid))
+			return false;
+		if (strength == null) {
+			if (other.strength != null)
+				return false;
+		} else if (!strength.equals(other.strength))
+			return false;
+		return true;
+	}
 }

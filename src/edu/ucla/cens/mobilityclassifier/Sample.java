@@ -66,4 +66,9 @@ public class Sample {
 	public Double getZ() {
 		return z;
 	}
+
+	@Override
+	public String toString() {
+		return "Sample [x=" + x + ", y=" + y + ", z=" + z + "]";
+	}
 }

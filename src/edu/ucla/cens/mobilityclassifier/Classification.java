@@ -100,5 +100,66 @@ public class Classification {
 	
 	public void setWifiMode(String wifiMode) {
 		this.wifiMode = wifiMode;
-	}	
+	}
+
+	@Override
+	public String toString() {
+		return "Classification [mode=" + mode + ", fft=" + fft + ", wifiMode="
+				+ wifiMode + ", average=" + average + ", variance=" + variance
+				+ ", hasFeatures=" + hasFeatures + "]";
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((average == null) ? 0 : average.hashCode());
+		result = prime * result + ((fft == null) ? 0 : fft.hashCode());
+		result = prime * result + (hasFeatures ? 1231 : 1237);
+		result = prime * result + ((mode == null) ? 0 : mode.hashCode());
+		result = prime * result
+				+ ((variance == null) ? 0 : variance.hashCode());
+		result = prime * result
+				+ ((wifiMode == null) ? 0 : wifiMode.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Classification other = (Classification) obj;
+		if (average == null) {
+			if (other.average != null)
+				return false;
+		} else if (!average.equals(other.average))
+			return false;
+		if (fft == null) {
+			if (other.fft != null)
+				return false;
+		} else if (!fft.equals(other.fft))
+			return false;
+		if (hasFeatures != other.hasFeatures)
+			return false;
+		if (mode == null) {
+			if (other.mode != null)
+				return false;
+		} else if (!mode.equals(other.mode))
+			return false;
+		if (variance == null) {
+			if (other.variance != null)
+				return false;
+		} else if (!variance.equals(other.variance))
+			return false;
+		if (wifiMode == null) {
+			if (other.wifiMode != null)
+				return false;
+		} else if (!wifiMode.equals(other.wifiMode))
+			return false;
+		return true;
+	}
 }

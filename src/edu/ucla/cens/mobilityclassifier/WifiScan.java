@@ -66,4 +66,42 @@ public class WifiScan {
 	public List<AccessPoint> getAccessPoints() {
 		return accessPoints;
 	}
+
+	@Override
+	public String toString() {
+		return "WifiScan [time=" + time + ", accessPoints=" + accessPoints
+				+ "]";
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((accessPoints == null) ? 0 : accessPoints.hashCode());
+		result = prime * result + ((time == null) ? 0 : time.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		WifiScan other = (WifiScan) obj;
+		if (accessPoints == null) {
+			if (other.accessPoints != null)
+				return false;
+		} else if (!accessPoints.equals(other.accessPoints))
+			return false;
+		if (time == null) {
+			if (other.time != null)
+				return false;
+		} else if (!time.equals(other.time))
+			return false;
+		return true;
+	}
 }
