@@ -58,7 +58,7 @@ public class MobilityClassifier {
 	 * @param speed
 	 * @return Classification with mode, and, if they were calculated, features
 	 */
-	private Classification getTransportMode(ArrayList<Double> magnitudes, Double speed, WifiScan wifiScan, WifiScan lastWifiScan, String lastMode)
+	private Classification getTransportMode(ArrayList<Double> magnitudes, Double speed, WifiScan wifiScan, WifiScan lastWifiScans, String lastMode)
 	{
 		double dataSize = magnitudes.size();
 		Classification classification = new Classification();
@@ -73,11 +73,11 @@ public class MobilityClassifier {
 		String wifiActivity = UNKNOWN;
 		
 		if (wifiScan != null) {
-			if (lastWifiScan == null) {
+			if (lastWifiScans == null || lastWifiScans.size() == 0) {
 				wifiActivity = checkWifi(wifiScan, null, lastMode);
 			}
 			else {
-				wifiActivity = checkWifi(wifiScan, lastWifiScan, lastMode);
+				wifiActivity = checkWifi(wifiScan, lastWifiScans, lastMode);
 			}
 		}
 		
@@ -133,22 +133,24 @@ public class MobilityClassifier {
 	 * @param sample
 	 * @return Magnitude value
 	 */
-	private String checkWifi(WifiScan wifiScan, WifiScan lastWifiScan, String lastMode) {
+	private String checkWifi(WifiScan wifiScan, WifiScan lastWifiScans, String lastMode) {
 		long time = wifiScan.getTime().longValue();
 		
-		if (lastWifiScan != null) {
+		if (lastWifiScans != null && lastWifiScans.size() > 0) {
 			
-			long lastTime = lastWifiScan.getTime().longValue();
+			long lastTime = lastWifiScans.get(lastWifiScans.size() - 1).getTime().longValue();
 
 			if (lastTime == time) { // no new wifi data 
 				return lastMode;
 			}
 
-			if (lastTime < time - 1000 * 60 * 8) { // if no recent wifi for comparison
+			if (lastTime < time - 1000 * 60 * 10) { // if no recent wifi for comparison
 				return UNKNOWN;
 			}
-			
-			List<String> lastSSIDList = getSSIDList(lastWifiScan.getAccessPoints());
+			List<String> lastSSIDList = new ArrayList();
+			for (WifiScan scan : lastWifiScans)
+				if (scan.getTime().longValue() >= time - 1000 * 60 * 10) // make sure old points aren't getting mixed in
+					lastSSIDList.addAll(getSSIDList(scan.getAccessPoints()));
 			List<String> currentSSIDList = getSSIDList(wifiScan.getAccessPoints());
 			
 			// Compare to the access points from last time
@@ -163,21 +165,37 @@ public class MobilityClassifier {
 				total++;
 			}
 			
-			for (String ssid : lastSSIDList) {
-				if (! currentSSIDList.contains(ssid)) { // only count others that don't match. We don't count the same ones again. Change that if too many false DRIVE classifications
-					total++;
+//			for (String ssid : lastSSIDList) {
+//				if (! currentSSIDList.contains(ssid)) { // only count others that don't match. We don't count the same ones again. Change that if too many false DRIVE classifications
+//					total++;
+//				}
+//			}
+			
+			
+			
+			if (total > 0)
+			{
+				int threshold = 2;
+				if (total <= 3)
+					threshold = 1;
+				if (total == 1)
+					threshold = 0;
+				if (same <= threshold)
+				{
+					return DRIVE;// + " " + same / total;
 				}
-			}
+				else
+				{
+					return STILL;// + " " + same / total;
+				}
 
-			if (total > 0 && ((same / total) < (1.0 / 3.0))) {
-				return DRIVE;
 			}
-			else if (total > 0) {
-				return STILL;
-			}
-			else {
+			else
+			{
 				return UNKNOWN;
 			}
+			
+			
 		}
 		else {
 			return UNKNOWN;
