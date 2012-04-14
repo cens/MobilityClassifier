@@ -29,7 +29,7 @@ public class MobilityClassifier {
 	// private static final String BIKE = "bike"; // not supported now
 	private static final String DRIVE = "drive";
 	private static final String UNKNOWN = "unknown";
-	private static final String VERSION = "1.2.9";
+	private static final String VERSION = "1.3.3";
 	public static boolean wifiChecking = true;
 	
 	public static String getVersion() {
@@ -40,7 +40,7 @@ public class MobilityClassifier {
 	 * Takes the raw sensor values and returns a classification object with the
 	 * transport mode and, when applicable, features.
 	 */
-	public Classification classify(List<Sample> accelValues, Double speed, WifiScan wifiScan, WifiScan lastWifiScan, String lastMode) {
+	public Classification classify(List<Sample> accelValues, Double speed, WifiScan wifiScan, List<WifiScan> lastWifiScans, String lastMode) {
 		// Convert from triaxial to single magnitude ArrayList in gravity units
 		ArrayList<Double> magnitudes = new ArrayList<Double>();
 		for (Sample sample : accelValues) {
@@ -49,7 +49,7 @@ public class MobilityClassifier {
 		if (lastMode == null || (! lastMode.equals("STILL") && ! lastMode.equals("DRIVE"))) {
 			lastMode = UNKNOWN; // Not allowing any aberrant values for this
 		}
-		return getTransportMode(magnitudes, speed, wifiScan, lastWifiScan, lastMode);
+		return getTransportMode(magnitudes, speed, wifiScan, lastWifiScans, lastMode);
 	}
 
 	/**
@@ -58,7 +58,7 @@ public class MobilityClassifier {
 	 * @param speed
 	 * @return Classification with mode, and, if they were calculated, features
 	 */
-	private Classification getTransportMode(ArrayList<Double> magnitudes, Double speed, WifiScan wifiScan, WifiScan lastWifiScans, String lastMode)
+	private Classification getTransportMode(ArrayList<Double> magnitudes, Double speed, WifiScan wifiScan, List<WifiScan> lastWifiScans, String lastMode)
 	{
 		double dataSize = magnitudes.size();
 		Classification classification = new Classification();
@@ -80,6 +80,7 @@ public class MobilityClassifier {
 				wifiActivity = checkWifi(wifiScan, lastWifiScans, lastMode);
 			}
 		}
+		
 		
 		classification.setWifiMode(wifiActivity);
 		
@@ -133,21 +134,20 @@ public class MobilityClassifier {
 	 * @param sample
 	 * @return Magnitude value
 	 */
-	private String checkWifi(WifiScan wifiScan, WifiScan lastWifiScans, String lastMode) {
+	private String checkWifi(WifiScan wifiScan, List<WifiScan> lastWifiScans, String lastMode) {
 		long time = wifiScan.getTime().longValue();
 		
 		if (lastWifiScans != null && lastWifiScans.size() > 0) {
-			
 			long lastTime = lastWifiScans.get(lastWifiScans.size() - 1).getTime().longValue();
 
-			if (lastTime == time) { // no new wifi data 
+			if (lastTime == time) { // no new wifi data
 				return lastMode;
 			}
 
 			if (lastTime < time - 1000 * 60 * 10) { // if no recent wifi for comparison
 				return UNKNOWN;
 			}
-			List<String> lastSSIDList = new ArrayList();
+			List<String> lastSSIDList = new ArrayList<String>();
 			for (WifiScan scan : lastWifiScans)
 				if (scan.getTime().longValue() >= time - 1000 * 60 * 10) // make sure old points aren't getting mixed in
 					lastSSIDList.addAll(getSSIDList(scan.getAccessPoints()));
@@ -164,13 +164,11 @@ public class MobilityClassifier {
 				}
 				total++;
 			}
-			
 //			for (String ssid : lastSSIDList) {
 //				if (! currentSSIDList.contains(ssid)) { // only count others that don't match. We don't count the same ones again. Change that if too many false DRIVE classifications
 //					total++;
 //				}
 //			}
-			
 			
 			
 			if (total > 0)
@@ -214,9 +212,9 @@ public class MobilityClassifier {
 			strsum += strength; 
 			strcount++;
 			
-			if (accessPoints.get(i).getStrength() < -50) {
-				ssidList.add(ssid);
-			}
+//			if (accessPoints.get(i).getStrength() > -50) {
+//				ssidList.add(ssid);
+//			}
 		}
 		
 		if (ssidList.size() == 0 && strcount > 0) {
@@ -227,10 +225,10 @@ public class MobilityClassifier {
 				String ssid = accessPoints.get(i).getSsid(); 
 				Double strength = accessPoints.get(i).getStrength();
 				
-				strsum += strength;
-				strcount++;
+//				strsum += strength;
+//				strcount++;
 				
-				if (strength < avg) {
+				if (strength >= avg) {
 					ssidList.add(ssid);
 				}
 			}
@@ -396,10 +394,7 @@ public class MobilityClassifier {
 //	{
 //		// List<Sample> accelValues, Double speed, String wifi, String lastWifi, String lastMode
 //		ArrayList<Sample> accelValues = new ArrayList<Sample>();
-//		Sample sample = new Sample();
-//		sample.setX(0.);
-//		sample.setY(0.);
-//		sample.setZ(1.);
+//		Sample sample = new Sample(0, 0, 1);
 //		accelValues.add(sample);
 //		accelValues.add(sample);
 //		accelValues.add(sample);
@@ -420,6 +415,36 @@ public class MobilityClassifier {
 //		accelValues.add(sample);
 //		String last = "{\"timezone\":\"org.apache.harmony.luni.internal.util.ZoneInfo[\\\"PST\\\",mRawOffset=-28800000,mUseDst=true]\",\"time\":1325716855277,\"scan\":[{\"ssid\":\"00:27:0d:ed:35:61\",\"strength\":-91},{\"ssid\":\"00:1a:1e:81:96:41\",\"strength\":-88},{\"ssid\":\"00:23:69:0d:7a:d8\",\"strength\":-88},{\"ssid\":\"00:11:24:a9:82:a4\",\"strength\":-87},{\"ssid\":\"00:1a:1e:81:96:43\",\"strength\":-87},{\"ssid\":\"00:1a:1e:81:96:45\",\"strength\":-87},{\"ssid\":\"00:1a:1e:1f:3a:24\",\"strength\":-84},{\"ssid\":\"00:1a:1e:1f:3a:25\",\"strength\":-83},{\"ssid\":\"00:1a:1e:1f:3a:22\",\"strength\":-83},{\"ssid\":\"00:1a:1e:89:4b:82\",\"strength\":-82},{\"ssid\":\"00:1a:1e:1f:3a:23\",\"strength\":-82},{\"ssid\":\"00:1a:1e:89:4b:83\",\"strength\":-82},{\"ssid\":\"00:1a:1e:89:4b:81\",\"strength\":-81},{\"ssid\":\"00:17:5a:b7:ef:90\",\"strength\":-60},{\"ssid\":\"00:1a:1e:1f:3c:c4\",\"strength\":-56},{\"ssid\":\"00:1a:1e:1f:3c:c5\",\"strength\":-53},{\"ssid\":\"00:1a:1e:1f:3c:c2\",\"strength\":-53},{\"ssid\":\"00:1a:1e:1f:3c:c1\",\"strength\":-51}]}";
 //		String current = "{\"timezone\":\"org.apache.harmony.luni.internal.util.ZoneInfo[\\\"PST\\\",mRawOffset=-28800000,mUseDst=true]\",\"time\":1325716976116,\"scan\":[{\"ssid\":\"00:1a:1e:81:96:41\",\"strength\":-88},{\"ssid\":\"00:27:0d:ed:35:62\",\"strength\":-88},{\"ssid\":\"00:27:0d:ed:35:60\",\"strength\":-88},{\"ssid\":\"00:1a:1e:89:4b:83\",\"strength\":-82},{\"ssid\":\"00:1a:1e:89:4b:82\",\"strength\":-81},{\"ssid\":\"00:1a:1e:89:4b:85\",\"strength\":-81},{\"ssid\":\"00:1a:1e:1f:3a:24\",\"strength\":-80},{\"ssid\":\"00:1a:1e:1f:3a:22\",\"strength\":-80},{\"ssid\":\"00:1a:1e:89:4b:81\",\"strength\":-76},{\"ssid\":\"00:17:5a:b7:ef:90\",\"strength\":-61},{\"ssid\":\"00:1a:1e:1f:3c:c5\",\"strength\":-54},{\"ssid\":\"00:1a:1e:1f:3c:c4\",\"strength\":-53},{\"ssid\":\"00:1a:1e:1f:3c:c1\",\"strength\":-53},{\"ssid\":\"00:1a:1e:1f:3c:c2\",\"strength\":-53}]}";
-//		System.out.println(new MobilityClassifier().classify(accelValues, 1.0, current, last, UNKNOWN).getMode());
+//		ArrayList<AccessPoint> accessPoints = new ArrayList<AccessPoint>();
+//		accessPoints.add(new AccessPoint("1", -40));
+//		accessPoints.add(new AccessPoint("2", -40));
+//		accessPoints.add(new AccessPoint("3", -30));
+//		accessPoints.add(new AccessPoint("4", -80));
+//		accessPoints.add(new AccessPoint("5", -30));
+//		WifiScan ws1 = new WifiScan(System.currentTimeMillis() - 1000, accessPoints);
+//		accessPoints = new ArrayList<AccessPoint>();
+//		accessPoints.add(new AccessPoint("1", -30));
+//		accessPoints.add(new AccessPoint("2", -30));
+////		accessPoints.add(new AccessPoint("3", -40));
+////		accessPoints.add(new AccessPoint("4", -40));
+////		accessPoints.add(new AccessPoint("5", -40));
+//		WifiScan ws2 = new WifiScan(System.currentTimeMillis() - 2000, accessPoints);
+//		accessPoints = new ArrayList<AccessPoint>();
+////		accessPoints.add(new AccessPoint("3", -40));
+////		accessPoints.add(new AccessPoint("4", -30));
+////		accessPoints.add(new AccessPoint("5", -40));
+//		
+//		WifiScan ws3 = new WifiScan(System.currentTimeMillis() - 3000, accessPoints);
+//		accessPoints = new ArrayList<AccessPoint>();
+//		accessPoints.add(new AccessPoint("3", -30));
+//		
+//		WifiScan ws4 = new WifiScan(System.currentTimeMillis() - 4000, accessPoints);
+//		
+//		List<WifiScan> lasts = new ArrayList<WifiScan>();
+//		lasts.add(ws2);
+//		lasts.add(ws3);
+//		lasts.add(ws4);
+//		System.out.println("lasts has " + lasts.size());
+//		System.out.println(new MobilityClassifier().classify(accelValues, 1.0, ws1, lasts, UNKNOWN).getMode());
 //	}
 }
