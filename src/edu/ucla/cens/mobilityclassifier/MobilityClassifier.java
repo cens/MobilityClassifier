@@ -147,10 +147,16 @@ public class MobilityClassifier {
 			if (lastTime < time - 1000 * 60 * 10) { // if no recent wifi for comparison
 				return UNKNOWN;
 			}
+			List<Long> prevTimeStamps = new ArrayList<Long>();
 			List<String> lastSSIDList = new ArrayList<String>();
 			for (WifiScan scan : lastWifiScans)
-				if (scan.getTime().longValue() >= time - 1000 * 60 * 10) // make sure old points aren't getting mixed in
+				if (scan.getTime().longValue() >= time - 1000 * 60 * 10 && !prevTimeStamps.contains(scan.getTime())) // make sure old points aren't getting mixed in
+				{
 					lastSSIDList.addAll(getSSIDList(scan.getAccessPoints()));
+					prevTimeStamps.add(scan.getTime());
+				}
+//				else
+//					System.out.println("Skippin' "+ scan.getAccessPoints().size());
 			List<String> currentSSIDList = getSSIDList(wifiScan.getAccessPoints());
 			
 			// Compare to the access points from last time
@@ -436,9 +442,14 @@ public class MobilityClassifier {
 //		
 //		WifiScan ws3 = new WifiScan(System.currentTimeMillis() - 3000, accessPoints);
 //		accessPoints = new ArrayList<AccessPoint>();
-//		accessPoints.add(new AccessPoint("3", -30));
+//		accessPoints.add(new AccessPoint("1", -40));
+//		accessPoints.add(new AccessPoint("2", -40));
+//		accessPoints.add(new AccessPoint("3", -40));
+//		accessPoints.add(new AccessPoint("4", -40));
+//		accessPoints.add(new AccessPoint("5", -40));
 //		
 //		WifiScan ws4 = new WifiScan(System.currentTimeMillis() - 4000, accessPoints);
+//		
 //		
 //		List<WifiScan> lasts = new ArrayList<WifiScan>();
 //		lasts.add(ws2);
