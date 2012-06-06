@@ -29,7 +29,7 @@ public class MobilityClassifier {
 	// private static final String BIKE = "bike"; // not supported now
 	private static final String DRIVE = "drive";
 	private static final String UNKNOWN = "unknown";
-	private static final String VERSION = "1.3.3";
+	private static final String VERSION = "1.3.7"; // same classifier as 1.3.3 but now accepts -1 for speed
 	public static boolean wifiChecking = true;
 	
 	public static String getVersion() {
@@ -43,6 +43,8 @@ public class MobilityClassifier {
 	public Classification classify(List<Sample> accelValues, Double speed, WifiScan wifiScan, List<WifiScan> lastWifiScans, String lastMode) {
 		// Convert from triaxial to single magnitude ArrayList in gravity units
 		ArrayList<Double> magnitudes = new ArrayList<Double>();
+		if (speed < 0)
+			speed = Double.NaN;
 		for (Sample sample : accelValues) {
 			magnitudes.add(getMagnitude(sample));
 		}
