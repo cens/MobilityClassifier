@@ -143,8 +143,11 @@ public class MobilityClassifier {
 			long lastTime = lastWifiScans.get(lastWifiScans.size() - 1).getTime().longValue();
 
 			if (lastTime == time) { // no new wifi data
+				System.out.println("At " + time + " lastMode is " + lastMode);
 				return lastMode;
 			}
+			else
+				System.out.println("This is a new point: " + time + " is not " + lastTime);
 
 			if (lastTime < time - 1000 * 60 * 10) { // if no recent wifi for comparison
 				return UNKNOWN;
