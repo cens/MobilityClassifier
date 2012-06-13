@@ -48,7 +48,7 @@ public class MobilityClassifier {
 		for (Sample sample : accelValues) {
 			magnitudes.add(getMagnitude(sample));
 		}
-		if (lastMode == null || (! lastMode.equals("STILL") && ! lastMode.equals("DRIVE"))) {
+		if (lastMode == null || (! lastMode.equals(STILL) && ! lastMode.equals(DRIVE))) {
 			lastMode = UNKNOWN; // Not allowing any aberrant values for this
 		}
 		return getTransportMode(magnitudes, speed, wifiScan, lastWifiScans, lastMode);
@@ -143,13 +143,14 @@ public class MobilityClassifier {
 			long lastTime = lastWifiScans.get(lastWifiScans.size() - 1).getTime().longValue();
 
 			if (lastTime == time) { // no new wifi data
-				System.out.println("At " + time + " lastMode is " + lastMode);
+				// System.out.println("At " + time + " lastMode is " + lastMode);
 				return lastMode;
 			}
 			else
-				System.out.println("This is a new point: " + time + " is not " + lastTime);
+				// System.out.println("This is a new point: " + time + " is not " + lastTime);
 
 			if (lastTime < time - 1000 * 60 * 10) { // if no recent wifi for comparison
+				// System.out.println("unknown because the previous wifi scan was ages ago");
 				return UNKNOWN;
 			}
 			List<Long> prevTimeStamps = new ArrayList<Long>();
@@ -161,7 +162,7 @@ public class MobilityClassifier {
 					prevTimeStamps.add(scan.getTime());
 				}
 //				else
-//					System.out.println("Skippin' "+ scan.getAccessPoints().size());
+//					// System.out.println("Skippin' "+ scan.getAccessPoints().size());
 			List<String> currentSSIDList = getSSIDList(wifiScan.getAccessPoints());
 			
 			// Compare to the access points from last time
@@ -201,12 +202,14 @@ public class MobilityClassifier {
 			}
 			else
 			{
+				// System.out.println("unknown because there are no APs in this sample");
 				return UNKNOWN;
 			}
 			
 			
 		}
 		else {
+			// System.out.println("unknown because last wifi scans were null or empty");
 			return UNKNOWN;
 		}
 	}
