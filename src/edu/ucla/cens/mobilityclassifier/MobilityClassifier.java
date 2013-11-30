@@ -24,7 +24,8 @@ import java.util.List;
  * @author Joshua Selsky
  */
 public class MobilityClassifier {
-	public static final long HISTORY_THRESHOLD_MILLIS = 1000 * 60 * 10;
+	public static final long WIFI_THRESHOLD_MILLIS = 1000 * 60 * 10;
+	public static final long LOC_THRESHOLD_MILLIS = 1000 * 60 * 6;
 	private static final String STILL = "still";
 	private static final String WALK = "walk";
 	private static final String RUN = "run";
@@ -186,7 +187,7 @@ public class MobilityClassifier {
 				return lc;
 			}
 			
-			if (lastTime < time - HISTORY_THRESHOLD_MILLIS) { // if no recent wifi for comparison
+			if (lastTime < time - LOC_THRESHOLD_MILLIS) { // if no recent wifi for comparison
 				// System.out.println("unknown because the previous wifi scan was ages ago");
 				lc.setLocationMode(UNKNOWN);
 				return lc;
@@ -223,8 +224,26 @@ public class MobilityClassifier {
 						maxDist = dist;
 				}
 			}
+			double radius = maxDist / 2; // not used, see next part
 			
-			double radius = maxDist / 2;
+			
+			if (histLocs.size() >= 2)
+            {
+            	int index = histLocs.size() - 2;
+                while (index >= 0)
+                {
+                	if (histLocs.get(histLocs.size() - 1).getTime() > 60  * 1000 + histLocs.get(index).getTime())
+                
+                	{
+                		radius = Distance(histLocs.get(histLocs.size() - 1), histLocs.get(index)) / 2;
+                		break;
+                	}
+                	index--;
+                }
+            }   
+			
+			
+			
 //			for (String ssid : lastSSIDList) {
 //				if (! currentSSIDList.contains(ssid)) { // only count others that don't match. We don't count the same ones again. Change that if too many false DRIVE classifications
 //					total++;
@@ -287,7 +306,7 @@ public class MobilityClassifier {
 //			else
 				// System.out.println("This is a new point: " + time + " is not " + lastTime);
 
-			if (lastTime < time - HISTORY_THRESHOLD_MILLIS) { // if no recent wifi for comparison
+			if (lastTime < time - WIFI_THRESHOLD_MILLIS) { // if no recent wifi for comparison
 				// System.out.println("unknown because the previous wifi scan was ages ago");
 				wifiClassification.setWifiMode(UNKNOWN);
 				return wifiClassification;
@@ -295,7 +314,7 @@ public class MobilityClassifier {
 			List<Long> prevTimeStamps = new ArrayList<Long>();
 			List<String> lastSSIDList = new ArrayList<String>();
 			for (WifiScan scan : lastWifiScans)
-				if (scan.getTime().longValue() >= time - HISTORY_THRESHOLD_MILLIS && !prevTimeStamps.contains(scan.getTime())) // make sure old points aren't getting mixed in
+				if (scan.getTime().longValue() >= time - WIFI_THRESHOLD_MILLIS && !prevTimeStamps.contains(scan.getTime())) // make sure old points aren't getting mixed in
 				{
 					lastSSIDList.addAll(getSSIDList(scan.getAccessPoints()));
 					prevTimeStamps.add(scan.getTime());
@@ -418,30 +437,39 @@ public class MobilityClassifier {
 	private String activity(Double gps_speed, double avg, double var, double a1, double a2, double a3, double a4, double a5,
 			double a6, double a7, double a8, double a9, double a0, Classification classification)
 	{
-		if (classification.getWifiRecogTotal() <= 3)
-		{
-			if (var <= 0.038625)
-			{
-				if (classification.getRadius() <= 238.44889)//0.002696)
-				{
-					if (classification.getWifiTotal() <= 1)
-						return DRIVE;
-					else
-						return STILL;
-				}
-				else
-					return DRIVE;
-			}
+		
+		if (var <= 0.038625)
+			if ((classification.getWifiRecogTotal() <= 3 && classification.getWifiRecogRatio() <= .380952) || classification.getRadius() > 108)
+				return DRIVE;
 			else
-				return WALK;
-		}
-		else
-		{
-			if (a2 <= .314018)
 				return STILL;
-			else
-				return WALK;
-		}
+		else return WALK;
+						
+		
+//		if (classification.getWifiRecogTotal() <= 3)
+//		{
+//			if (var <= 0.038625)
+//			{
+//				if (classification.getRadius() <= 108.095049)//38.44889)//0.002696)
+//				{
+//					if (avg <= .999593)
+//						return DRIVE;
+//					else
+//						return STILL;
+//				}
+//				else
+//					return DRIVE;
+//			}
+//			else
+//				return WALK;
+//		}
+//		else
+//		{
+//			if (a9 <= 1.206552)//(a2 <= .314018)
+//				return STILL;
+//			else
+//				return WALK;
+//		}
 	}
 	
 	/**
