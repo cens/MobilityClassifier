@@ -27,12 +27,17 @@ public class Classification {
 	private Double average;
 	private Double variance;
 	private boolean hasFeatures;
+	private int wifiTotal;
+	private int wifiRecogTotal;
+	private double radius;
+	private double travelled;
+	private String locationMode;
 	
 //	private ArrayList<Double> N95Fft;
 //	private Double N95Variance;
 	
 	/**
-	 * Creates a mutable Classifcation instance.
+	 * Creates a mutable Classification instance.
 	 */
 	public Classification() {
 		
@@ -161,5 +166,73 @@ public class Classification {
 		} else if (!wifiMode.equals(other.wifiMode))
 			return false;
 		return true;
+	}
+
+	public int getWifiRecogTotal() {
+		return wifiRecogTotal;
+	}
+	
+	public void setWifiRecogTotal(int total)
+	{
+		this.wifiRecogTotal = total;
+	}
+	
+	public void setWifiTotal(int total)
+	{
+		this.wifiTotal = total;
+	}
+
+	public int getWifiTotal() {
+		// TODO Auto-generated method stub
+		return wifiTotal;
+	}
+
+	public double getWifiRecogRatio() {
+		if (wifiTotal > 0)
+			return (double)wifiRecogTotal / wifiTotal;
+		else 
+			return Double.NaN;
+	}
+	
+	public double getRadius() {
+		return radius;
+	}
+
+	public void setRadius(double r) {
+		this.radius = r;
+		
+	}
+
+	public void setTravelled(double t) {
+		this.travelled = t;
+		
+	}
+
+	public void updateWifi(Classification wifiClassification) {
+		this.wifiMode = wifiClassification.wifiMode;
+		this.wifiRecogTotal = wifiClassification.wifiRecogTotal;
+		this.wifiTotal = wifiClassification.wifiTotal;
+		
+	}
+
+	public void updateLocation(Classification locationClassification) {
+		this.radius = locationClassification.getRadius();
+		this.travelled = locationClassification.getTravelled();
+		this.locationMode = locationClassification.getLocationMode();
+		
+		
+	}
+
+	public double getTravelled() {
+		return travelled;
+	}
+
+	public void setLocationMode(String locMode) {
+		this.locationMode = locMode;
+	}
+	
+	public String getLocationMode()
+	{
+		return locationMode;
 	}
 }

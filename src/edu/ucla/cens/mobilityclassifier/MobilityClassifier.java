@@ -18,19 +18,22 @@ package edu.ucla.cens.mobilityclassifier;
 import java.util.ArrayList;
 import java.util.List;
 
+
 /**
  * @author Brent Longstaff
  * @author Joshua Selsky
  */
 public class MobilityClassifier {
+	public static final long HISTORY_THRESHOLD_MILLIS = 1000 * 60 * 10;
 	private static final String STILL = "still";
 	private static final String WALK = "walk";
 	private static final String RUN = "run";
 	// private static final String BIKE = "bike"; // not supported now
 	private static final String DRIVE = "drive";
 	private static final String UNKNOWN = "unknown";
-	private static final String VERSION = "1.3.7"; // same classifier as 1.3.3 but now accepts -1 for speed
+	private static final String VERSION = "1.4.7"; // newly retrained classifier
 	public static boolean wifiChecking = true;
+	public static boolean locationChecking = true;
 	
 	public static String getVersion() {
 		return VERSION;
@@ -40,7 +43,7 @@ public class MobilityClassifier {
 	 * Takes the raw sensor values and returns a classification object with the
 	 * transport mode and, when applicable, features.
 	 */
-	public Classification classify(List<Sample> accelValues, Double speed, WifiScan wifiScan, List<WifiScan> lastWifiScans, String lastMode) {
+	public Classification classify(List<Sample> accelValues, Double speed, WifiScan wifiScan, List<WifiScan> lastWifiScans, Location currLoc, ArrayList<Location> histLocs, Classification lastClassification) {
 		// Convert from triaxial to single magnitude ArrayList in gravity units
 		ArrayList<Double> magnitudes = new ArrayList<Double>();
 		if (speed < 0)
@@ -48,10 +51,25 @@ public class MobilityClassifier {
 		for (Sample sample : accelValues) {
 			magnitudes.add(getMagnitude(sample));
 		}
-		if (lastMode == null || (! lastMode.equals(STILL) && ! lastMode.equals(DRIVE))) {
-			lastMode = UNKNOWN; // Not allowing any aberrant values for this
+		if (lastClassification == null)
+		{
+			lastClassification = new Classification();
+			lastClassification.setWifiMode(UNKNOWN);
+			lastClassification.setLocationMode(UNKNOWN);
 		}
-		return getTransportMode(magnitudes, speed, wifiScan, lastWifiScans, lastMode);
+		
+		if (lastClassification.getWifiMode() == null)
+			lastClassification.setWifiMode(UNKNOWN);
+		if (lastClassification.getLocationMode() == null)
+			lastClassification.setLocationMode(UNKNOWN);
+		
+		if (!lastClassification.getWifiMode().equals(STILL) && !lastClassification.getWifiMode().equals(DRIVE)) {
+			lastClassification.setWifiMode(UNKNOWN); // Not allowing any aberrant values for this
+		}
+		if (! lastClassification.getLocationMode().equals(STILL) && ! lastClassification.getLocationMode().equals(DRIVE)) {
+			lastClassification.setLocationMode(UNKNOWN); // Not allowing any aberrant values for this
+		}
+		return getTransportMode(magnitudes, speed, wifiScan, lastWifiScans, currLoc, histLocs, lastClassification);
 	}
 
 	/**
@@ -60,7 +78,7 @@ public class MobilityClassifier {
 	 * @param speed
 	 * @return Classification with mode, and, if they were calculated, features
 	 */
-	private Classification getTransportMode(ArrayList<Double> magnitudes, Double speed, WifiScan wifiScan, List<WifiScan> lastWifiScans, String lastMode)
+	private Classification getTransportMode(ArrayList<Double> magnitudes, Double speed, WifiScan wifiScan, List<WifiScan> lastWifiScans, Location currLoc, ArrayList<Location> histLocs, Classification lastClassification)
 	{
 		double dataSize = magnitudes.size();
 		Classification classification = new Classification();
@@ -72,19 +90,40 @@ public class MobilityClassifier {
 			return classification;
 		}
 		
-		String wifiActivity = UNKNOWN;
+		Classification wifiClassification, locationClassification;
 		
 		if (wifiScan != null) {
 			if (lastWifiScans == null || lastWifiScans.size() == 0) {
-				wifiActivity = checkWifi(wifiScan, null, lastMode);
+				wifiClassification = checkWifi(wifiScan, null, lastClassification);
 			}
 			else {
-				wifiActivity = checkWifi(wifiScan, lastWifiScans, lastMode);
+				wifiClassification = checkWifi(wifiScan, lastWifiScans, lastClassification);
 			}
 		}
+		else
+		{
+			wifiClassification = new Classification();
+			wifiClassification.setMode(UNKNOWN);
+		}
+		
+		if (currLoc != null)
+		{
+			if (histLocs == null || histLocs.size() == 0) {
+				locationClassification = checkLocation(currLoc, null, lastClassification);
+			}
+			else {
+				locationClassification = checkLocation(currLoc, histLocs, lastClassification);
+			}
+		}
+		else
+		{
+			locationClassification = new Classification();
+			locationClassification.setLocationMode(UNKNOWN);
+		}
+		classification.updateWifi(wifiClassification);
+		classification.updateLocation(locationClassification);
 		
 		
-		classification.setWifiMode(wifiActivity);
 		
 		double sum = 0.0;
 		double average = 0.0;
@@ -107,21 +146,26 @@ public class MobilityClassifier {
 
 		variance = sum / dataSize;
 
-		for (int i = 0; i < dataSize; i++) {
-			magnitudes.set(i, magnitudes.get(i) * 310.); // convert to N95 units
-		}
+//		for (int i = 0; i < dataSize; i++) {
+//			magnitudes.set(i, magnitudes.get(i) * 310.); // convert to N95 units
+//		}
 
-		for (int i = 0; i < dataSize; i++) {
-			magnitudes.get(i);
-		}
+//		for (int i = 0; i < dataSize; i++) {
+//			magnitudes.get(i);
+//		}
 
-		String activity = activity(speed,average,variance, fft.get(0), fft.get(1), fft.get(2), fft.get(3), fft.get(4), fft.get(5), fft.get(6), fft.get(7), fft.get(8), fft.get(9));
+		String activity = activity(speed,average,variance, fft.get(0), fft.get(1), fft.get(2), fft.get(3), fft.get(4), fft.get(5), fft.get(6), fft.get(7), fft.get(8), fft.get(9), classification);
 		
-		if (wifiChecking && ! wifiActivity.equals(UNKNOWN)) {
-			if (activity.equals(DRIVE) || activity.equals(STILL)) {
-				activity = wifiActivity; // The other classifier is rubbish for still/drive; just use WiFi result if there is one
-			}
-		}
+//		if (wifiChecking && ! classification.getWifiMode().equals(UNKNOWN)) {
+//			if (activity.equals(DRIVE) || activity.equals(STILL)) {
+//				activity = classification.getWifiMode(); // The other classifier is rubbish for still/drive; just use WiFi result if there is one
+//			}
+//		}
+//		if (locationChecking && !classification.getLocationMode().equals(UNKNOWN)) {
+//			if (activity.equals(DRIVE) || activity.equals(STILL)) {
+//				activity = classification.getLocationMode(); // Sometimes Wi-Fi is not enough. TODO update this after using weka
+//			}
+//		}
 		
 		classification.setMode(activity);
 		classification.setAverage(average);
@@ -131,32 +175,127 @@ public class MobilityClassifier {
 		return classification;
 	}
 
+	private Classification checkLocation(Location currLoc,
+			ArrayList<Location> histLocs, Classification lastClassification) {
+		long time = currLoc.getTime();
+		Classification lc = new Classification();
+		if (histLocs != null && histLocs.size() > 0) {
+			long lastTime = histLocs.get(histLocs.size() - 1).getTime();
+			if (lastTime == time) {
+				lc.updateLocation(lastClassification);
+				return lc;
+			}
+			
+			if (lastTime < time - HISTORY_THRESHOLD_MILLIS) { // if no recent wifi for comparison
+				// System.out.println("unknown because the previous wifi scan was ages ago");
+				lc.setLocationMode(UNKNOWN);
+				return lc;
+			}
+			
+			
+//			List<Long> prevTimeStamps = new ArrayList<Long>();
+//			List<Location> lastLocList = new ArrayList<Location>();
+//			for (Location loc : histLocs)
+//				if (loc.getTime() >= time - HISTORY_THRESHOLD_MILLIS && !prevTimeStamps.contains(loc.getTime())) // make sure old points aren't getting mixed in
+//				{
+//					lastLocList.add(loc);
+//					prevTimeStamps.add(loc.getTime());
+//				}
+			
+//				else
+//					// System.out.println("Skippin' "+ scan.getAccessPoints().size());
+//			List<String> currentLocList = getSSIDList(wifiScan.getAccessPoints());
+			
+			// Compare to the access points from last time
+			double maxDist = 0;
+			double travelled = Distance(currLoc, histLocs.get(0));
+//			List<Double> speeds = new ArrayList<Double>();
+//			List<Location> othersSoFar = new ArrayList<Location>();
+			// Now we can do the comparison
+//			Location prev = null;
+			for (Location loc1 : histLocs) {
+//				if (prev != null)
+					
+				for (Location loc2 : histLocs)
+				{
+					double dist = Distance(loc1, loc2);
+					if (dist > maxDist)
+						maxDist = dist;
+				}
+			}
+			
+			double radius = maxDist / 2;
+//			for (String ssid : lastSSIDList) {
+//				if (! currentSSIDList.contains(ssid)) { // only count others that don't match. We don't count the same ones again. Change that if too many false DRIVE classifications
+//					total++;
+//				}
+//			}
+			
+			
+
+			lc.setRadius(radius);
+			lc.setTravelled(travelled);
+			// TODO after weka, make it do correct logic
+			// lc.setLocationMode(mode);
+			
+		}
+		lc.setLocationMode(UNKNOWN);
+		return lc;
+	}
+
+	private double NaïveDistance(Location loc1, Location loc2) {
+		// TODO Auto-generated method stub
+		return Math.sqrt(Math.pow(loc1.getLatitude() - loc2.getLatitude(), 2) + Math.pow(loc1.getLongitude() - loc2.getLongitude(), 2));
+	}
+
+	private double Distance(Location loc1, Location loc2) {
+    	
+	    double pk = (float) (180/3.14169);
+
+	    double a1 = loc1.getLatitude() / pk;
+	    double a2 = loc1.getLongitude() / pk;
+	    double b1 = loc2.getLatitude() / pk;
+	    double b2 = loc2.getLongitude() / pk;
+
+	    double t1 = Math.cos(a1)*Math.cos(a2)*Math.cos(b1)*Math.cos(b2);
+	    double t2 = Math.cos(a1)*Math.sin(a2)*Math.cos(b1)*Math.sin(b2);
+	    double t3 = Math.sin(a1)*Math.sin(b1);
+	    double tt = Math.acos(t1 + t2 + t3);
+	   
+	    return 6366000*tt;
+    	
+    }
+	
 	/**
 	 * Compares current WiFi point to the previous one, and returns UNKNOWN, STILL, or DRIVE
 	 * @param sample
 	 * @return Magnitude value
 	 */
-	private String checkWifi(WifiScan wifiScan, List<WifiScan> lastWifiScans, String lastMode) {
+	private Classification checkWifi(WifiScan wifiScan, List<WifiScan> lastWifiScans, Classification lastClassification) {
 		long time = wifiScan.getTime().longValue();
-		
+		Classification wifiClassification = new Classification();
 		if (lastWifiScans != null && lastWifiScans.size() > 0) {
 			long lastTime = lastWifiScans.get(lastWifiScans.size() - 1).getTime().longValue();
-
+			
 			if (lastTime == time) { // no new wifi data
 				// System.out.println("At " + time + " lastMode is " + lastMode);
-				return lastMode;
+				
+				wifiClassification.updateWifi(lastClassification);
+				return wifiClassification;
 			}
-			else
+//			System.err.println(lastTime + " " + time);
+//			else
 				// System.out.println("This is a new point: " + time + " is not " + lastTime);
 
-			if (lastTime < time - 1000 * 60 * 10) { // if no recent wifi for comparison
+			if (lastTime < time - HISTORY_THRESHOLD_MILLIS) { // if no recent wifi for comparison
 				// System.out.println("unknown because the previous wifi scan was ages ago");
-				return UNKNOWN;
+				wifiClassification.setWifiMode(UNKNOWN);
+				return wifiClassification;
 			}
 			List<Long> prevTimeStamps = new ArrayList<Long>();
 			List<String> lastSSIDList = new ArrayList<String>();
 			for (WifiScan scan : lastWifiScans)
-				if (scan.getTime().longValue() >= time - 1000 * 60 * 10 && !prevTimeStamps.contains(scan.getTime())) // make sure old points aren't getting mixed in
+				if (scan.getTime().longValue() >= time - HISTORY_THRESHOLD_MILLIS && !prevTimeStamps.contains(scan.getTime())) // make sure old points aren't getting mixed in
 				{
 					lastSSIDList.addAll(getSSIDList(scan.getAccessPoints()));
 					prevTimeStamps.add(scan.getTime());
@@ -182,7 +321,7 @@ public class MobilityClassifier {
 //				}
 //			}
 			
-			
+			String mode = UNKNOWN;
 			if (total > 0)
 			{
 				int threshold = 2;
@@ -192,25 +331,29 @@ public class MobilityClassifier {
 					threshold = 0;
 				if (same <= threshold)
 				{
-					return DRIVE;// + " " + same / total;
+					mode = DRIVE;// + " " + same / total;
 				}
 				else
 				{
-					return STILL;// + " " + same / total;
+					mode = STILL;// + " " + same / total;
 				}
 
 			}
 			else
 			{
 				// System.out.println("unknown because there are no APs in this sample");
-				return UNKNOWN;
+				mode = UNKNOWN;
 			}
-			
+			wifiClassification.setWifiMode(mode);
+			wifiClassification.setWifiTotal((int)total);
+			wifiClassification.setWifiRecogTotal((int)same);
+			return wifiClassification;
 			
 		}
 		else {
 			// System.out.println("unknown because last wifi scans were null or empty");
-			return UNKNOWN;
+			wifiClassification.setWifiMode(UNKNOWN);
+			return wifiClassification;
 		}
 	}
 	
@@ -271,8 +414,38 @@ public class MobilityClassifier {
 	    return totalForce;
 	}   
 	
+	
+	private String activity(Double gps_speed, double avg, double var, double a1, double a2, double a3, double a4, double a5,
+			double a6, double a7, double a8, double a9, double a0, Classification classification)
+	{
+		if (classification.getWifiRecogTotal() <= 3)
+		{
+			if (var <= 0.038625)
+			{
+				if (classification.getRadius() <= 238.44889)//0.002696)
+				{
+					if (classification.getWifiTotal() <= 1)
+						return DRIVE;
+					else
+						return STILL;
+				}
+				else
+					return DRIVE;
+			}
+			else
+				return WALK;
+		}
+		else
+		{
+			if (a2 <= .314018)
+				return STILL;
+			else
+				return WALK;
+		}
+	}
+	
 	/**
-	 * This is the main classification method. Updated code after retraining
+	 * This is the old main classification method. Updated code after retraining
 	 * @param acc_var
 	 * @param accgz1
 	 * @param accgz2
