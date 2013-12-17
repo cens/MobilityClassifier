@@ -262,10 +262,7 @@ public class MobilityClassifier {
 		return lc;
 	}
 
-	private double NaïveDistance(Location loc1, Location loc2) {
-		// TODO Auto-generated method stub
-		return Math.sqrt(Math.pow(loc1.getLatitude() - loc2.getLatitude(), 2) + Math.pow(loc1.getLongitude() - loc2.getLongitude(), 2));
-	}
+	
 
 	private double Distance(Location loc1, Location loc2) {
     	
@@ -439,7 +436,7 @@ public class MobilityClassifier {
 	{
 		
 		if (var <= 0.038625)
-			if ((classification.getWifiRecogTotal() <= 3 && classification.getWifiRecogRatio() <= .380952) || classification.getRadius() > 108)
+			if ((classification.getWifiRecogTotal() <= 3 && classification.getWifiRecogRatio() <= .380952 && classification.getWifiTotal() > 0) || classification.getRadius() > 108)
 				return DRIVE;
 			else
 				return STILL;
